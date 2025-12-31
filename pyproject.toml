@@ -1,75 +1,45 @@
 [build-system]
+requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
-requires = [
-  "setuptools",
-]
 
 [project]
-name = "{{PROJECT_NAME}}"
-version = "0.0.1"
-description = "{{PROJECT_DESCRIPTION}}"
-authors = [{ name = "Free Law Project", email = "info@free.law" }]
-requires-python = ">=3.13"
+name = "blackletter"
+version = "0.1.0"
+description = "Remove copyrighted material from legal case law PDFs"
 readme = "README.md"
+requires-python = ">=3.8"
 license = "BSD-2-Clause"
-keywords = [
-    "legal",
-    "courts",
-]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+authors = [
+    {name = "Your Name", email = "bill@free.law"}
 ]
 
-urls.Repository = "https://github.com/freelawproject/{{PROJECT_NAME}}"
-urls."Organisation Homepage" = "https://free.law/"
+dependencies = [
+    "ultralytics>=8.0.0",
+    "opencv-python>=4.8.0",
+    "pdfplumber>=0.10.0",
+    "pymupdf>=1.23.0",
+    "numpy>=1.20.0",
+]
 
-[tool.setuptools]
-packages = [ "project_name" ]
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+blackletter = "blackletter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["blackletter*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
 
 [tool.ruff]
-line-length = 79
-lint.extend-safe-fixes = [
-  # non-pep585-annotation
-  "UP006",
-]
-lint.select = [
-  # flake8-bugbear
-  "B",
-  # flake8-comprehensions
-  "C4",
-  # pycodestyle
-  "E",
-  # Pyflakes errors
-  "F",
-  # isort
-  "I",
-  # flake8-simplify
-  "SIM",
-  # flake8-tidy-imports
-  "TID",
-  # pyupgrade
-  "UP",
-  # Pyflakes warnings
-  "W",
-]
-lint.ignore = [
-  # flake8-bugbear opinionated rules
-  "B9",
-  # line-too-long
-  "E501",
-  # suppressible-exception
-  "SIM105",
-  # if-else-block-instead-of-if-exp
-  "SIM108",
-  # printf-string-formatting
-  "UP031",
-]
+line-length = 100
+target-version = "py38"

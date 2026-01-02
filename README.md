@@ -2,10 +2,9 @@
 
 Remove copyrighted material from legal case law PDFs.
 
-A reference to blackletter law, this tool removes proprietary annotations from judicial opinions—specifically, headnotes, and other copyrighted materials—while preserving the authentic opinion text.
+A reference to blackletter law, this tool removes proprietary annotations from judicial opinions—specifically, headnotes, captions, key cites, and other copyrighted materials—while preserving the authentic opinion text.
 
 ## Installation
-
 ```bash
 git clone https://github.com/yourusername/blackletter
 cd blackletter
@@ -42,45 +41,89 @@ from blackletter import redact_pdf
 redacted_pdf, redacted_opinions, masked_opinions = redact_pdf(path_to_file)
 ```
 
-Another example, that takes the raw scan and isolates the opinion context before splitting 
-```
+## Splitting Advance Sheets
+
+An "advance sheet" is a legal reporter volume containing multiple judicial opinions. This tool can automatically split an advance sheet into individual opinion PDFs, identifying volume, reporter, and page ranges either through the Gemini API or manual metadata.
+
+### Example: Split with Manual Metadata
+
+If you already have metadata about the advance sheet (volume number, reporter, page ranges), provide it directly to skip the API call:
+```python
 from pathlib import Path
 from blackletter import BlackletterPipeline, scan_splitter
 
 pipeline = BlackletterPipeline()
-raw_scan = "/filepath/to/scan.pdf"
+raw_scan = Path("/filepath/to/advance_sheet.pdf")
 
-# you can give it manual metadata if you dont want to use the LLM
-metadata = [{"id": 0, "volume": 536, "reporter": "P.3d", "pages": {"start": 737, "end": 1213}}]
+# Manual metadata (skips Gemini API)
+metadata = [
+    {
+        "id": 0,
+        "volume": 536,
+        "reporter": "P.3d",
+        "issue_no": 3,
+        "pages": {"start": 737, "end": 1213}
+    }
+]
 
-OR 
-
-use an env variable LLM_API_KEY for gemini
-
-# Identify the opinion content and separate into volume reporter pages
+# Identify opinion boundaries and separate by volume/reporter
 results = scan_splitter(
-    target_file=Path(raw_scan),
+    target_file=raw_scan,
     model=pipeline.model,
-    output_dir="/output/directory/here/",
+    output_dir=Path("./output"),
     metadata=metadata,
 )
 
-# Process each individual volume into its redacted opinions
+# Process each opinion into redacted versions
 for result in results:
     opinions_filepath = Path(result['opinion_pdf'])
-    parts = Path(opinions_filepath).parts 
+    parts = opinions_filepath.parts
+    
     redacted_pdf, _, _ = pipeline.process(
-        pdf_path=filepath,
+        pdf_path=opinions_filepath,
         first_page=int(parts[-2]),
         redact=True,
         mask=True,
         reduce=True,
     )
-
 ```
 
+### Example: Split with Gemini API
+
+If you don't have metadata, the tool can extract it automatically using the Gemini API: use `LLM_API_KEY`
+```python
+from pathlib import Path
+from blackletter import BlackletterPipeline, scan_splitter
+import os
+
+pipeline = BlackletterPipeline()
+raw_scan = Path("/filepath/to/advance_sheet.pdf")
+
+# Set your Gemini API key
+os.environ["GEMINI_API_KEY"] = "your-api-key"
+
+# scan_splitter will automatically call Gemini to extract metadata
+results = scan_splitter(
+    target_file=raw_scan,
+    model=pipeline.model,
+    output_dir=Path("./output"),
+    # metadata parameter is optional - omit it to use Gemini
+)
+
+# Process results as above...
+for result in results:
+    opinions_filepath = Path(result['opinion_pdf'])
+    redacted_pdf, _, _ = pipeline.process(
+        pdf_path=opinions_filepath,
+        redact=True,
+        mask=True,
+        reduce=True,
+    )
+```
 
 ## How It Works
+
+### Single Opinion Processing
 
 The pipeline operates in four phases:
 
@@ -89,8 +132,17 @@ The pipeline operates in four phases:
 3. **Execution (Phase 3)**: Applies redactions and masks to the PDF
 4. **Extraction (Phase 4)**: Splits opinions into individual files (redacted and masked versions)
 
-## Command Line Options
+### Advance Sheet Splitting
 
+For raw book scan splitting:
+
+1. **Metadata Extraction**: Gemini API (or manual metadata) identifies opinion boundaries, volume numbers, and reporter information
+2. **Section Detection**: YOLO finds the start of the opinion section (OPINION header)
+3. **Job Planning**: Maps metadata to physical page locations and plans extraction jobs
+4. **PDF Splitting**: Extracts individual opinions based on page ranges
+5. **Individual Processing**: Each extracted opinion is processed through the single opinion pipeline (see above)
+
+## Command Line Options
 ```bash
 blackletter PDF [OPTIONS]
 
@@ -110,42 +162,35 @@ Optional Arguments:
   --reduce              Remove fully redacted pages from masked output
 ```
 
-## Configuration
-
-Configure behavior via the RedactionConfig object:
-
-```python
-from blackletter import BlackletterPipeline
-from blackletter.config import RedactionConfig
-
-config = RedactionConfig(
-    MODEL_PATH="best.pt",
-    confidence_threshold=0.20,
-    dpi=200,
-)
-
-pipeline = BlackletterPipeline(config)
-redacted_pdf, redacted_opinions, masked_opinions = pipeline.process("opinion.pdf")
-```
-
 ## Output
 
-The pipeline produces three outputs:
+The pipeline produces three types of outputs:
 
 1. **Redacted PDF**: Original PDF with copyrighted content marked for redaction
 2. **Redacted Opinions**: Individual opinion PDFs extracted from the redacted document
 3. **Masked Opinions**: Individual opinion PDFs with non-opinion content masked out
 
+When processing advance sheets, each identified opinion is extracted and processed separately, producing all three output types for each opinion.
+
+### Folders
+
+Blackletter will generate the following folder strtucture and outputs
+
+    /reporter/volume/page/opinion.pdf
+    /reporter/volume/page/redactions/opinion_redacted.pdf
+    /reporter/volume/page/redactions/masked/ [SEPARATE MASKED OPINIONS]
+    /reporter/volume/page/redactions/redacted/ [SEPARATE REDACTED OPINIONS]
+
+
 ## Requirements
 
-- Python 3.8+
-- YOLO model (`best.pt`)
-- PDFs must be text-based (not scanned images)
+- Python 3.9+
+- Gemini API key (for automatic metadata extraction; optional if using manual metadata)
 
 ## License
 
-MIT
+GNU Affero General Public License v3
 
 ## Contributing
 
-Contributions welcome! Please submit issues and PRs.
+Contributions welcome! 

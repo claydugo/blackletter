@@ -24,7 +24,7 @@ blackletter path/to/opinion.pdf -o output/folder -p 737
 from blackletter import BlackletterPipeline
 
 pipeline = BlackletterPipeline()
-redacted_pdf, opinions_dir = pipeline.process("opinion.pdf")
+redacted_pdf, redacted_opinions, masked_opinions = pipeline.process("opinion.pdf")
 ```
 
 ## How It Works
@@ -34,23 +34,54 @@ The pipeline operates in four phases:
 1. **Scanning (Phase 1)**: Uses YOLO to detect copyrighted elements (captions, key cites, headnotes, etc.)
 2. **Planning (Phase 2)**: State machine determines which text spans to redact
 3. **Execution (Phase 3)**: Applies redactions and masks to the PDF
-4. **Extraction (Phase 4)**: Splits opinions into individual files
+4. **Extraction (Phase 4)**: Splits opinions into individual files (redacted and masked versions)
+
+## Command Line Options
+
+```bash
+blackletter PDF [OPTIONS]
+
+Positional Arguments:
+  pdf                   Path to PDF file
+
+Optional Arguments:
+  -o, --output PATH     Output folder (default: pdf_parent/redactions)
+  -v, --volume STR      The volume to redact
+  -r, --reporter STR    The reporter to extract out
+  -p, --page INT        First page number for case naming (default: 1)
+  -m, --model PATH      Path to YOLO model (default: best.pt)
+  -c, --confidence FLOAT Confidence threshold (default: 0.20)
+  -d, --dpi INT         DPI for PDF rendering (default: 200)
+  --redact              Only redact PDF without masking
+  --mask                Only mask opinions (extract without redacting PDF)
+  --reduce              Remove fully redacted pages from masked output
+```
 
 ## Configuration
+
+Configure behavior via the RedactionConfig object:
 
 ```python
 from blackletter import BlackletterPipeline
 from blackletter.config import RedactionConfig
 
 config = RedactionConfig(
-    confidence_threshold=0.25,
+    MODEL_PATH="best.pt",
+    confidence_threshold=0.20,
     dpi=200,
-    MODEL_PATH="best.pt"
 )
 
 pipeline = BlackletterPipeline(config)
-redacted_pdf, opinions_dir = pipeline.process("opinion.pdf")
+redacted_pdf, redacted_opinions, masked_opinions = pipeline.process("opinion.pdf")
 ```
+
+## Output
+
+The pipeline produces three outputs:
+
+1. **Redacted PDF**: Original PDF with copyrighted content marked for redaction
+2. **Redacted Opinions**: Individual opinion PDFs extracted from the redacted document
+3. **Masked Opinions**: Individual opinion PDFs with non-opinion content masked out
 
 ## Requirements
 
@@ -65,5 +96,3 @@ MIT
 ## Contributing
 
 Contributions welcome! Please submit issues and PRs.
-
-[//]: # (blackletter /Users/Palin/Code/gemini/src/output/processed/p3d/536/737/opinions.pdf -o ./output)

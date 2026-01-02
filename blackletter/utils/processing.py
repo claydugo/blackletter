@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 def detect_columns_from_image(img_bgr: np.ndarray) -> Tuple[int, int, int, int, int]:
     """Detect left/right column boundaries from image using projection analysis.
 
-    Returns:
-        (LEFT_X1, LEFT_X2, RIGHT_X1, RIGHT_X2, center_X)
+    :param img_bgr: BGR image array
+    :return: tuple of (LEFT_X1, LEFT_X2, RIGHT_X1, RIGHT_X2, center_X)
     """
     h, w = img_bgr.shape[:2]
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -115,12 +115,9 @@ def fallback_column_detection(w_img: int) -> Tuple[int, int, int, int, int]:
 def column_for_coords(coords: List[float], center_X: int) -> str:
     """Determine if coordinates are in LEFT or RIGHT column.
 
-    Args:
-        coords: [x1, y1, x2, y2]
-        center_X: x-coordinate of column split
-
-    Returns:
-        "LEFT" or "RIGHT"
+    :param coords: [x1, y1, x2, y2]
+    :param center_X: x-coordinate of column split
+    :return: "LEFT" or "RIGHT"
     """
     x1, _, x2, _ = coords
     center_x = (x1 + x2) / 2
@@ -137,18 +134,12 @@ def process_brackets(
     Brackets are editorial marks (e.g., [sic], [note]) that should be
     attributed to a specific column.
 
-    Args:
-        page: pdfplumber page object
-        img: cv2 image
-        coords: [x1, y1, x2, y2] in image pixels
-        conf: confidence score
-        page_dimension:
-        columns:
+    :param page: pdfplumber page object
+    :param bracket: detection object for the bracket
+    :param page_context: page context with column and layout information
 
-    Returns:
-        (coords, col) tuple or None if bracket should be filtered
+    :return: (coords, col) tuple or None if bracket should be filtered
     """
-
     page_dimension = page_context.page_dimensions
     columns = page_context.columns
 
@@ -193,7 +184,13 @@ BRACKETS_ONLY = set("[]")
 
 
 def _extract_bracket_text(page, pdf_bbox: Tuple[float, float, float, float]) -> str:
-    """Extract text from a bracket region in PDF coordinates."""
+    """Extract text from a bracket region in PDF coordinates.
+
+    :param page: pdfplumber page object
+    :param pdf_bbox: bounding box in PDF coordinates (x0, y0, x1, y1)
+
+    :return: extracted text from the bracket region
+    """
     cropped = page.crop(pdf_bbox, strict=False)
     try:
         return (
@@ -211,9 +208,10 @@ def _extract_bracket_text(page, pdf_bbox: Tuple[float, float, float, float]) -> 
 def _passes_bracket_text_filters(text: str, fc: int) -> bool:
     """Validate bracket text content and confidence.
 
-    Args:
-        text: Extracted text from bracket
-        fc: Confidence * 1000 (integer confidence score)
+    :param text: extracted text from bracket
+    :param fc: confidence * 1000 (integer confidence score)
+
+    :return: True if bracket text passes validation filters
     """
     if not text:
         return False
@@ -243,7 +241,16 @@ def _passes_bracket_text_filters(text: str, fc: int) -> bool:
 def _yolo_to_pdf_bbox(
     coords: List[float], pdf_w: float, pdf_h: float, img_w: int, img_h: int
 ) -> Tuple[float, float, float, float]:
-    """Convert YOLO coords (pixels) to PDF coords."""
+    """Convert YOLO coords (pixels) to PDF coords.
+
+    :param coords: bounding box in image pixels [x1, y1, x2, y2]
+    :param pdf_w: PDF page width in points
+    :param pdf_h: PDF page height in points
+    :param img_w: image width in pixels
+    :param img_h: image height in pixels
+
+    :return: bounding box in PDF coordinates (x0, y0, x1, y1)
+    """
     scale_x = pdf_w / img_w
     scale_y = pdf_h / img_h
     x1, y1, x2, y2 = coords
@@ -255,7 +262,14 @@ def _clamp_bracket_to_column(
     col: str,
     columns: tuple,
 ) -> Optional[List[float]]:
-    """Clamp bracket coordinates to its column boundaries."""
+    """Clamp bracket coordinates to its column boundaries.
+
+    :param coords: bounding box coordinates [x1, y1, x2, y2]
+    :param col: column assignment ("LEFT" or "RIGHT")
+    :param columns: tuple of column boundaries (LEFT_X1, LEFT_X2, RIGHT_X1, RIGHT_X2)
+
+    :return: clamped coordinates or None if invalid
+    """
     x1, y1, x2, y2 = coords
     LEFT_X1, LEFT_X2, RIGHT_X1, RIGHT_X2, _ = columns
 

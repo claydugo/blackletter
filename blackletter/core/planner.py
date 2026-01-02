@@ -93,39 +93,3 @@ class OpinionPlanner:
 
         logger.info(f"Planned {len(document.opinions)} opinions")
         return document
-
-    def _record_opinion_span(self, spans: List, start: Detection, end: Detection, reason: str):
-        """Record an opinion span."""
-        if not start or not end:
-            return
-
-        self.opinion_idx += 1
-        spans.append({"n": self.opinion_idx, "start": start, "end": end, "reason": reason})
-
-        sp = start.page_index + 1
-        ep = end.page_index + 1
-        logger.info(f"Opinion {self.opinion_idx:03d}: pages {sp}–{ep} ({reason})")
-
-    @staticmethod
-    def _assign_case_names(opinion_spans: List[Dict], page_start: int):
-        """Assign case names to opinions."""
-        if not opinion_spans:
-            return
-
-        COL_ORDER = {"LEFT": 0, "RIGHT": 1}
-
-        def sort_key(span):
-            start = span.get("start", {})
-            page = start.page_index
-            col = COL_ORDER.get(start.col)
-            y1 = start.coords[1]
-            return (page, col, y1)
-
-        opinion_spans.sort(key=sort_key)
-
-        page_counter = {}
-        for sp in opinion_spans:
-            first_page = sp["start"].page_index + page_start
-            counter = page_counter.get(first_page, 0) + 1
-            page_counter[first_page] = counter
-            sp["case_name"] = f"{first_page:04d}-{counter:02d}"

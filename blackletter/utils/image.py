@@ -22,18 +22,15 @@ class ImageProcessor:
     ) -> List[float]:
         """Tighten bounding box using image content analysis.
 
-        Args:
-            img_bgr: Input image (BGR)
-            coords: [x1, y1, x2, y2] in pixels
-            kind: Detection type ("key", "textline", "hline", "edges")
-            expand: How much to expand ROI around bbox
-            pad: Padding around detected content
-            min_area: Minimum contour area to consider
-            min_rel_w: Minimum relative width (shrink guard)
-            min_rel_h: Minimum relative height (shrink guard)
-
-        Returns:
-            Tightened [x1, y1, x2, y2] coordinates
+        :param img_bgr: input image (BGR)
+        :param coords: [x1, y1, x2, y2] in pixels
+        :param kind: detection type ("key", "textline", "hline", "edges")
+        :param expand: how much to expand ROI around bbox
+        :param pad: padding around detected content
+        :param min_area: minimum contour area to consider
+        :param min_rel_w: minimum relative width (shrink guard)
+        :param min_rel_h: minimum relative height (shrink guard)
+        :return: tightened [x1, y1, x2, y2] coordinates
         """
         H, W = img_bgr.shape[:2]
         x1, y1, x2, y2 = [int(round(v)) for v in coords]
@@ -116,14 +113,12 @@ class ImageProcessor:
     ) -> Optional[Tuple[int, int, int, int]]:
         """Find bounding box from binary mask.
 
-        Args:
-            mask: Binary mask image
-            pick: Selection strategy ("largest", "union", "best_aspect")
-            aspect_pref: Function to score aspect ratio (if pick="best_aspect")
-            min_area: Minimum contour area
+        :param mask: binary mask image
+        :param pick: selection strategy ("largest", "union", "best_aspect")
+        :param aspect_pref: function to score aspect ratio (if pick="best_aspect")
+        :param min_area: minimum contour area
 
-        Returns:
-            (x, y, width, height) or None
+        :return: (x, y, width, height) or None
         """
         cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if not cnts:
@@ -165,7 +160,17 @@ class ImageProcessor:
 def _clip_rect(
     x1: float, y1: float, x2: float, y2: float, W: int, H: int
 ) -> Optional[Tuple[int, int, int, int]]:
-    """Clip rectangle to image bounds."""
+    """Clip rectangle to image bounds.
+
+    :param x1: left x coordinate
+    :param y1: top y coordinate
+    :param x2: right x coordinate
+    :param y2: bottom y coordinate
+    :param W: image width
+    :param H: image height
+
+    :return: clipped rectangle (x1, y1, x2, y2) or None if invalid
+    """
     x1 = max(0, min(W, int(x1)))
     x2 = max(0, min(W, int(x2)))
     y1 = max(0, min(H, int(y1)))

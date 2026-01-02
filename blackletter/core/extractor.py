@@ -7,6 +7,7 @@ import fitz
 
 from blackletter import Document
 from blackletter.config import RedactionConfig
+from blackletter.core.scanner import Opinion
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +27,8 @@ class OpinionExtractor:
         Creates redacted/ directory with individual opinions.
         All pages from start to end included, no masking applied.
 
-        Args:
-            src_pdf_path: Path to the redacted source PDF
-            opinion_spans: List of opinion spans from planner
-
-        Returns:
-            Path to the redacted opinions directory
+        :param document: document object containing PDF and opinion instructions
+        :return: path to the redacted opinions directory
         """
 
         src_pdf_path = Path(document.redacted_pdf_path)
@@ -66,23 +63,16 @@ class OpinionExtractor:
     ) -> Path:
         """Extract opinions into separate PDFs with masking.
 
-        Args:
-            src_pdf_path: Path to the redacted source PDF
-            opinion_spans: List of opinion spans from planner
-            page_columns_px: Column boundaries per page
-            page_headers: Header y-coordinates per page
-            page_footers: Footer y-coordinates per page
+        :param document: document object containing PDF and opinion instructions
+        :param reduce: whether to reduce file size after masking
 
-        Returns:
-            Path to the masked opinions directory
+        :return: path to the masked opinions directory
         """
-
         src_pdf_path = Path(document.redacted_pdf_path)
         masked_dir = src_pdf_path.parent / "masked"
         masked_dir.mkdir(parents=True, exist_ok=True)
 
         src = fitz.open(src_pdf_path)
-        scale = 72 / self.config.dpi
 
         logger.info(f"Extracting {len(document.opinions)} opinions")
 
@@ -99,13 +89,7 @@ class OpinionExtractor:
             # Apply masking to hide non-opinion content
             self._apply_opinion_masking(
                 doc_out,
-                start_pg_idx,
-                end_pg_idx,
-                op.caption.coords[1],
-                op.key.coords[3],
-                op.caption.col,
-                op.key.col,
-                scale,
+                op,
                 document,
             )
             if reduce == True:
@@ -128,21 +112,28 @@ class OpinionExtractor:
     def _apply_opinion_masking(
         self,
         doc_out,
-        start_pg_idx: int,
-        end_pg_idx: int,
-        start_y_px: float,
-        end_y_px: float,
-        start_col: str,
-        end_col: str,
-        scale: float,
+        opinion: Opinion,
         document: Document,
-    ):
+    ) -> None:
         """Apply masking to hide non-opinion content on extracted pages.
 
         Masks everything outside the opinion span using white rectangles.
+
+        :param doc_out: output document object to apply masking to
+        :param opinion: Opinion object
+        :param document: document object with page layout information
+
+        :return: None
         """
+        scale = 72 / self.config.dpi
         p_start = doc_out[0]
         p_end = doc_out[-1]
+        start_pg_idx = opinion.caption.page_index
+        end_pg_idx = opinion.key.page_index
+        start_y_px = opinion.caption.coords[1]
+        end_y_px = opinion.key.coords[3]
+        start_col = opinion.caption.col
+        end_col = opinion.key.col
 
         def safe_redact(page, rect):
             """Safely add redaction if rect is valid."""
@@ -169,7 +160,6 @@ class OpinionExtractor:
 
         # === END PAGE ===
         W_end, H_end = p_end.rect.width, p_end.rect.height
-        # split_end = get_split_pt(end_pg_idx, W_end)
         split_end = document.pages[end_pg_idx].midpoint * scale
 
         ey_pt = end_y_px * scale

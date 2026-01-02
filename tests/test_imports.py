@@ -29,7 +29,6 @@ def test_core_imports():
 def test_utils_imports():
     """Test that all utils can be imported."""
     from blackletter.utils import (
-        BoxFilter,
         HeaderProcessor,
         ImageProcessor,
         process_brackets,
@@ -39,7 +38,6 @@ def test_utils_imports():
         redact_text_lines_in_window,
     )
 
-    assert BoxFilter is not None
     assert HeaderProcessor is not None
     assert ImageProcessor is not None
     assert callable(process_brackets)
@@ -78,22 +76,6 @@ def test_config_customization():
     assert config.confidence_threshold == 0.25
     assert config.MODEL_PATH == "custom.pt"
 
-
-def test_boxfilter_methods():
-    """Test BoxFilter utility methods."""
-    from blackletter.utils.filtering import BoxFilter
-
-    # Test rect_area
-    area = BoxFilter.rect_area([0, 0, 10, 10])
-    assert area == 100
-
-    # Test IoU (non-overlapping)
-    iou = BoxFilter.calculate_iou([0, 0, 10, 10], [20, 20, 30, 30])
-    assert iou == 0.0
-
-    # Test IoU (perfect overlap)
-    iou = BoxFilter.calculate_iou([0, 0, 10, 10], [0, 0, 10, 10])
-    assert iou == 1.0
 
 
 def test_column_for_coords():

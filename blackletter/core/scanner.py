@@ -95,18 +95,32 @@ class Document:
     reporter: Optional[str] = None
     first_page: Optional[int] = 1
 
-    def sort_all_objects(self):
-        """Sort page_objects on each page by column and y position."""
+    def sort_all_objects(self) -> None:
+        """Sort page_objects on each page by column and y position.
+
+        :return: None
+        """
         for page in self.pages:
             page.page_objects = sorted(page.page_objects, key=lambda o: (o.col, o.coords[1]))
             page.extract_bounds()
 
-    def add_opinion(self, start: Detection, end: Detection, midpoint: Optional[Detection] = None):
-        """Add an opinion to the document."""
+    def add_opinion(
+        self, start: Detection, end: Detection, midpoint: Optional[Detection] = None
+    ) -> None:
+        """Add an opinion to the document.
+
+        :param start: detection marking the start of the opinion
+        :param end: detection marking the end of the opinion
+        :param midpoint: optional detection marking a midpoint in the opinion
+        :return: None
+        """
         self.opinions.append(Opinion(start, end, midpoint))
 
     def assign_case_names(self):
-        """Assign case names to all opinions, sorted by page and column."""
+        """Assign case names to all opinions, sorted by page and column.
+
+        :return: None
+        """
         if not self.opinions:
             return
 
@@ -129,7 +143,10 @@ class Document:
             opinion.case_name = f"{first_page:04d}-{counter:02d}"
 
     def get_filler_pages(self) -> set[int]:
-        """Identify pages between caption and line/headmatter (filler pages)."""
+        """Identify pages between caption and line/headmatter (filler pages).
+
+        :return: set of page indices that are filler pages
+        """
         filler_pages = set()
 
         for opinion in self.opinions:
@@ -208,8 +225,20 @@ class PDFScanner:
 
         return document
 
-    def _detect_columns(self, page, w_img: int, pdf_width: float) -> Tuple[int, int, int, int, int]:
-        """Detect left/right column boundaries (pixel x coords)."""
+    def _detect_columns(
+        self,
+        page,
+        w_img: int,
+        pdf_width: float,
+    ) -> Tuple[int, int, int, int, int]:
+        """Detect left/right column boundaries (pixel x coords).
+
+        :param page: page object to detect columns from
+        :param w_img: image width in pixels
+        :param pdf_width: PDF page width in points
+
+        :return: tuple of (left_x1, left_x2, right_x1, right_x2, column_gap)
+        """
         try:
             pil_img = page.to_image(resolution=self.config.dpi).original
             img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
@@ -223,7 +252,11 @@ class PDFScanner:
         self,
         page_context: PageContext,
     ) -> PageContext:
-        """Detect objects on a single page using YOLO."""
+        """Detect objects on a single page using YOLO.
+
+        :param page_context: page context object to detect objects on
+        :return: updated page context with detected objects
+        """
         results = self.model(
             page_context.img, conf=self.config.low_confidence_threshold, verbose=False
         )
@@ -269,5 +302,9 @@ class PDFScanner:
         return page_context
 
     def _passes_confidence_filters(self, obj: Detection) -> bool:
-        """Check if detection passes confidence thresholds."""
+        """Check if detection passes confidence thresholds.
+
+        :param obj: detection object to check
+        :return: True if detection meets confidence threshold
+        """
         return obj.confidence >= self.config.confidence_threshold

@@ -10,17 +10,20 @@ class HeaderProcessor:
     """Processes and detects header regions in PDFs."""
 
     @staticmethod
-    def extract_header_words(page_pl, top_pts: float, gap_pts: float, y_tol: float) -> List[Dict]:
+    def extract_header_words(
+        page_pl,
+        top_pts: float,
+        gap_pts: float,
+        y_tol: float,
+    ) -> List[Dict]:
         """Extract and group words from header region.
 
-        Args:
-            page_pl: pdfplumber page object
-            top_pts: How far down from top to search
-            gap_pts: Maximum horizontal gap between chars to group as word
-            y_tol: Y-tolerance for grouping chars into same line
+        :param page_pl: pdfplumber page object
+        :param top_pts: how far down from top to search
+        :param gap_pts: maximum horizontal gap between chars to group as word
+        :param y_tol: y-tolerance for grouping chars into same line
 
-        Returns:
-            List of word dictionaries with position info
+        :return: list of word dictionaries with position info
         """
         chars = [c for c in page_pl.chars if c.get("top", 1e9) < top_pts and c.get("text")]
         if not chars:
@@ -93,17 +96,15 @@ class HeaderProcessor:
         Detects header content and returns a redaction box, but preserves
         page numbers that appear near the left/right margins.
 
-        Args:
-            page_pl: pdfplumber page object
-            top_pts: How far down to search for header content
-            gap_pts: Maximum gap between characters
-            y_tol: Y-tolerance for grouping text
-            margin_pts: Distance from edge where page numbers are expected
-            pad_x: Horizontal padding around detected text
-            pad_y: Vertical padding around detected text
+        :param page_pl: pdfplumber page object
+        :param top_pts: how far down to search for header content
+        :param gap_pts: maximum gap between characters
+        :param y_tol: y-tolerance for grouping text
+        :param margin_pts: distance from edge where page numbers are expected
+        :param pad_x: horizontal padding around detected text
+        :param pad_y: vertical padding around detected text
 
-        Returns:
-            (x0, y0, x1, y1) redaction box in points, or None
+        :return: (x0, y0, x1, y1) redaction box in points, or None
         """
         words = HeaderProcessor.extract_header_words(page_pl, top_pts, gap_pts, y_tol)
         if not words:

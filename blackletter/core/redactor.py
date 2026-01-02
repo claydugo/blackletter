@@ -47,13 +47,10 @@ class PDFRedactor:
     ) -> Path:
         """Apply all redactions to PDF.
 
-        Args:
-            pdf_path: Input PDF path
-            redaction_instructions: List of start->end redaction pairs
-            output_folder: Where to save redacted PDF
+        :param document: document object containing PDF and redaction instructions
+        :param output_folder: where to save redacted PDF
 
-        Returns:
-            Path to redacted PDF
+        :return: path to redacted PDF
         """
         logger.info("Starting PHASE 3: Applying redactions")
 
@@ -92,8 +89,15 @@ class PDFRedactor:
         page_pl,
         instr: Opinion,
         page: PageContext,
-    ):
-        """Apply a single redaction instruction."""
+    ) -> None:
+        """Apply a single redaction instruction.
+
+        :param page_fitz: fitz page object
+        :param page_pl: pdfplumber page object
+        :param instr: opinion instruction containing caption and line/headmatter spans
+        :param page: page context with layout and scaling information
+        :return: None
+        """
         start = instr.caption
         end = instr.line or instr.headmatter
 
@@ -112,8 +116,18 @@ class PDFRedactor:
         limit_bottom_left = page.footer_top or page.img_height - 60
         limit_bottom_right = page.footer_top or page.img_height - 60
 
-        def do_column_box(y_top_px: int, y_bottom_px: int, is_left: bool):
-            """Redact a column from y_top to y_bottom."""
+        def do_column_box(
+            y_top_px: int,
+            y_bottom_px: int,
+            is_left: bool,
+        ) -> None:
+            """Redact a column from y_top to y_bottom.
+
+            :param y_top_px: top y coordinate in pixels
+            :param y_bottom_px: bottom y coordinate in pixels
+            :param is_left: True to redact left column, False for right column
+            :return: None
+            """
             y_top_px = int(max(ceiling_y, y_top_px))
             max_y_px = limit_bottom_left if is_left else limit_bottom_right
             y_bottom_px = int(min(max_y_px, y_bottom_px))
@@ -177,9 +191,15 @@ class PDFRedactor:
         page_pl,
         page: PageContext,
         opinions: list[Opinion],
-    ):
-        """Apply body text redactions for a page."""
+    ) -> None:
+        """Apply body text redactions for a page.
 
+        :param page_fitz: fitz page object
+        :param page_pl: pdfplumber page object
+        :param page: page context with layout and scaling information
+        :param opinions: list of opinion instructions to apply
+        :return: None
+        """
         for opinion in opinions:
             self._apply_instruction(
                 page_fitz,
@@ -193,8 +213,14 @@ class PDFRedactor:
         page_fitz,
         page_pl,
         page: PageContext,
-    ):
-        """Apply redactions for specific detected objects."""
+    ) -> None:
+        """Apply redactions for specific detected objects.
+
+        :param page_fitz: fitz page object
+        :param page_pl: pdfplumber page object
+        :param page: page context with layout and scaling information
+        :return: None
+        """
         from blackletter.utils.header import HeaderProcessor
 
         header_coord = None
@@ -243,11 +269,27 @@ class PDFRedactor:
                 scale_y,
             )
 
-    # @staticmethod
     def _add_redaction_box(
-        self, page_fitz, x1: int, y1: int, x2: int, y2: int, scale_x: float, scale_y: float
-    ):
-        """Add a redaction box to a page."""
+        self,
+        page_fitz,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        scale_x: float,
+        scale_y: float,
+    ) -> None:
+        """Add a redaction box to a page.
+
+        :param page_fitz: fitz page object
+        :param x1: left x coordinate in pixels
+        :param y1: top y coordinate in pixels
+        :param x2: right x coordinate in pixels
+        :param y2: bottom y coordinate in pixels
+        :param scale_x: x-axis scale factor from image to PDF coordinates
+        :param scale_y: y-axis scale factor from image to PDF coordinates
+        :return: None
+        """
         if y2 <= y1 or x2 <= x1:
             return
 

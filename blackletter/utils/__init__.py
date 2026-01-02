@@ -1,6 +1,5 @@
 """Utility modules for blackletter."""
 
-from blackletter.utils.filtering import BoxFilter
 from blackletter.utils.header import HeaderProcessor
 from blackletter.utils.image import ImageProcessor
 from blackletter.utils.processing import (
@@ -12,7 +11,6 @@ from blackletter.utils.processing import (
 from blackletter.utils.text import redact_text_lines_in_window
 
 __all__ = [
-    "BoxFilter",
     "HeaderProcessor",
     "ImageProcessor",
     "process_brackets",

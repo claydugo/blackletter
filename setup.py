@@ -19,7 +19,7 @@ setup(
         "pdfplumber>=0.10.0",
         "pymupdf>=1.23.0",
         "numpy>=1.20.0",
-        "google-generativeai>=0.3.0",
+        "google-genai>=1.0.0",
     ],
     extras_require={
         "dev": [

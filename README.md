@@ -6,7 +6,7 @@ A reference to blackletter law, this tool removes proprietary annotations from j
 
 ## Installation
 ```bash
-git clone https://github.com/yourusername/blackletter
+git clone https://github.com/freelawproject/blackletter
 cd blackletter
 pip install -e .
 ```
@@ -45,7 +45,7 @@ redacted_pdf, redacted_opinions, masked_opinions = redact_pdf(path_to_file)
 
 An "advance sheet" is a legal reporter volume containing multiple judicial opinions. This tool can automatically split an advance sheet into individual opinion PDFs, identifying volume, reporter, and page ranges either through the Gemini API or manual metadata.
 
-### Example: Split with Manual Metadata
+### Example: Split with known Metadata
 
 If you already have metadata about the advance sheet (volume number, reporter, page ranges), provide it directly to skip the API call:
 ```python
@@ -100,9 +100,9 @@ pipeline = BlackletterPipeline()
 raw_scan = Path("/filepath/to/advance_sheet.pdf")
 
 # Set your Gemini API key
-os.environ["GEMINI_API_KEY"] = "your-api-key"
+os.environ["LLM_API_KEY"] = "your-api-key"
 
-# scan_splitter will automatically call Gemini to extract metadata
+# scan_splitter will automatically call gemini to extract metadata
 results = scan_splitter(
     target_file=raw_scan,
     model=pipeline.model,

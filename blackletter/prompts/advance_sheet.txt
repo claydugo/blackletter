@@ -1,4 +1,4 @@
-Extract the Volume and Repoter and Page ranges contained in the first page
+Extract the Volume and Reporter and Page ranges contained in the first page
 
 Ex. 1
 
